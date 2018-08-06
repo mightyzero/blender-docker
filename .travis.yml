@@ -1,0 +1,24 @@
+language: bash
+services: docker
+
+env:
+  - VERSION=2.79b VARIANT=ubuntu18.04
+
+install:
+  - git clone https://github.com/docker-library/official-images.git ~/official-images
+
+before_script:
+  - env | sort
+  - cd "$VERSION"
+  - image="blender:$VERSION${VARIANT:+-$VARIANT}"
+
+script:
+  - travis_retry docker build -t "$image" "${VARIANT:-.}"
+  - ~/official-images/test/run.sh "$image"
+# the "onbuild" variant has to happen with the base variant because it's FROM it
+  - if [ -z "$VARIANT" ] && [ -d onbuild ]; then travis_retry docker build -t "${image}-onbuild" onbuild; fi
+
+after_script:
+  - docker images
+
+# vim:set et ts=2 sw=2:
